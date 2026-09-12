@@ -1,0 +1,139 @@
+import { useEffect, useState } from "react";
+import "./App.css";
+
+function App() {
+  const [events, setEvents] = useState([]);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL}/events`)
+      .then((response) => response.json())
+      .then((data) => {
+        setEvents(data);
+      });
+
+    const socket = new WebSocket(
+      `${import.meta.env.VITE_WS_URL}/ws`
+    );
+
+    socket.onopen = () => {
+      console.log("WebSocket connected");
+      setIsConnected(true);
+    };
+
+    socket.onmessage = (event) => {
+      const newEvent = JSON.parse(event.data);
+
+      setEvents((previousEvents) => [
+        newEvent,
+        ...previousEvents
+      ]);
+    };
+
+    socket.onclose = () => {
+      console.log("WebSocket disconnected");
+      setIsConnected(false);
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
+
+  const getLatestStatus = (deviceType) => {
+    const latestEvent = events.find(
+      (event) => event.device_type === deviceType
+    );
+
+    return latestEvent ? latestEvent.status : "UNKNOWN";
+  };
+
+  const getStatusClass = (status) => {
+    if (status === "CLOSED" || status === "CLEAR" || status === "IDLE") {
+      return "status-safe";
+    }
+
+    if (
+      status === "OPEN" ||
+      status === "MOTION_DETECTED" ||
+      status === "RECORDING"
+    ) {
+      return "status-active";
+    }
+
+    return "";
+  };
+
+  const doorStatus = getLatestStatus("door_sensor");
+  const motionStatus = getLatestStatus("motion_sensor");
+  const cameraStatus = getLatestStatus("camera");
+
+  return (
+    <div className="dashboard">
+      <h1>Smart Home Monitor</h1>
+      
+      <div className="connection-status">
+        <span
+          className={
+            isConnected ? "connection-dot connected" : "connection-dot disconnected"
+          }
+        ></span>
+
+        {isConnected ? "Live" : "Disconnected"}
+      </div>
+      <p className="subtitle">Device Cloud Monitoring Dashboard</p>
+
+      <section>
+        <h2>Devices</h2>
+
+        <div className="device-grid">
+          <div className="device-card">
+            <h3>Front Door</h3>
+            <p>Door Sensor</p>
+            <h3 className={getStatusClass(doorStatus)}>
+              {doorStatus}
+            </h3>
+          </div>
+
+          <div className="device-card">
+            <h3>Motion Sensor</h3>
+            <p>Motion Detection</p>
+            <h3 className={getStatusClass(motionStatus)}>
+              {motionStatus}
+            </h3>
+          </div>
+
+          <div className="device-card">
+            <h3>Camera</h3>
+            <p>Security Camera</p>
+            <h3 className={getStatusClass(cameraStatus)}>
+              {cameraStatus}
+            </h3>
+          </div>
+        </div>
+      </section>
+
+      <section className="events-section">
+        <h2>Recent Events</h2>
+
+        <div className="event-list">
+          {events.map((event) => (
+            <div className="event-card" key={event.id}>
+              <div>
+                <h3>{event.device_id}</h3>
+                <p>{event.device_type}</p>
+              </div>
+
+              <div className="event-info">
+                <strong>{event.status}</strong>
+                <span>{event.created_at}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export default App;
