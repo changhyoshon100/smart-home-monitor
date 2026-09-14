@@ -1,79 +1,160 @@
 # Smart Home Device Monitoring System
 
-A full-stack smart home monitoring application that simulates cloud communication between home security devices and a monitoring dashboard.
+A full-stack smart home monitoring application that simulates security device events and displays device status updates in real time.
 
-The system processes device events through a FastAPI backend, stores event history in SQLite, and delivers real-time updates to a React dashboard using WebSockets.
+🔗 **Live Demo:** https://smart-home-monitor.pages.dev
 
-## Features
+## Overview
 
-- Monitor door, motion sensor, and camera states
-- Process device events through REST APIs
-- Persist device events in SQLite
-- Automatically trigger camera recording when motion is detected
-- Display current device states and recent event history
-- Push new events to the dashboard in real time using WebSockets
-- Display WebSocket connection status
+This project simulates a cloud-connected home security system with three devices:
+
+- Door Sensor
+- Motion Sensor
+- Security Camera
+
+Users can simulate an intrusion directly from the dashboard. The backend processes the device events, stores them in SQLite, and sends real-time updates to connected clients through WebSockets.
+
+For example, an intrusion simulation generates:
+
+- Front Door → `OPEN`
+- Motion Sensor → `MOTION_DETECTED`
+- Camera → `RECORDING`
+
+The system can also be reset to:
+
+- Front Door → `CLOSED`
+- Motion Sensor → `CLEAR`
+- Camera → `IDLE`
 
 ## Architecture
 
-Device / Sensor Simulation
-        |
-        | POST /events
-        v
+```text
+                    REST API
+React Dashboard ───────────────► FastAPI Backend
+       ▲                              │
+       │                              │
+       │ WebSocket                    ▼
+       └──────────────────────── SQLite Database
+                                      │
+                                      ▼
+                               Device Event History
+```
+
+### Event Flow
+
+```text
+Simulate Intrusion
+        │
+        ▼
+POST /simulate/intrusion
+        │
+        ▼
 FastAPI Backend
-        |
-        +----> SQLite Database
-        |
-        +----> Automation Rules
-        |        |
-        |        +--> Motion Detected → Camera Recording
-        |
-        +----> WebSocket
-                 |
-                 v
-          React Dashboard
+        │
+        ├── Door Sensor → OPEN
+        ├── Motion Sensor → MOTION_DETECTED
+        └── Camera → RECORDING
+        │
+        ▼
+SQLite
+        │
+        ▼
+WebSocket Broadcast
+        │
+        ▼
+React Dashboard
+```
+
+## Features
+
+- Real-time device status monitoring
+- REST API for device events
+- WebSocket-based live updates
+- Persistent event history with SQLite
+- Intrusion simulation
+- System reset simulation
+- Responsive web dashboard
+- Public live demo
 
 ## Tech Stack
 
-### Backend
-- Python
-- FastAPI
-- SQLite
-- REST API
-- WebSocket
-
-### Frontend
+**Frontend**
 - React
 - JavaScript
 - Vite
 - CSS
 
-## Example Event
+**Backend**
+- Python
+- FastAPI
+- WebSockets
+- SQLite
+
+**Deployment**
+- Cloudflare Pages
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | API health/root endpoint |
+| `GET` | `/events` | Retrieve device event history |
+| `POST` | `/events` | Create a device event |
+| `POST` | `/simulate/intrusion` | Simulate an intrusion |
+| `POST` | `/simulate/reset` | Reset devices to normal state |
+
+## Example Device Event
 
 ```json
 {
-  "device_id": "motion-001",
-  "device_type": "motion_sensor",
-  "status": "MOTION_DETECTED"
+  "device_id": "door-001",
+  "device_type": "door_sensor",
+  "status": "OPEN"
 }
+```
 
-When a motion event is received, the backend stores the event and triggers a camera recording event. Connected dashboard clients receive the new events through WebSocket communication.
+## Real-Time Updates
 
-Running Locally
-Backend
-    cd backend
-    source venv/bin/activate
-    uvicorn main:app --reload
+When the backend receives or generates a device event, it persists the event and broadcasts the update to connected dashboard clients through WebSockets.
 
-The backend runs on:
+This allows device states and recent events to update without requiring the user to refresh the page.
 
+## Running Locally
+
+### Backend
+
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+The API will run at:
+
+```text
 http://127.0.0.1:8000
+```
 
-API documentation:
+FastAPI documentation:
 
+```text
 http://127.0.0.1:8000/docs
+```
 
-Frontend
-    cd frontend
-    npm install
-    npm run dev
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Then open the local URL provided by Vite.
+
+## What I Learned
+
+Through this project, I practiced building a full-stack event-driven application involving REST APIs, persistent storage, real-time WebSocket communication, and frontend state synchronization.
+
+I also gained experience designing interactions between simulated IoT devices, backend services, and a monitoring dashboard.
