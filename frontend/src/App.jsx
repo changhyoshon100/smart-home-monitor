@@ -6,33 +6,28 @@ function App() {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/events`)
-      .then((response) => response.json())
-      .then((data) => {
-        setEvents(data);
-      });
+    setConnectionStatus("connecting");
 
-    const socket = new WebSocket(
-      `${import.meta.env.VITE_WS_URL}/ws`
-    );
+    const socket = new WebSocket(WS_URL);
 
     socket.onopen = () => {
       console.log("WebSocket connected");
-      setIsConnected(true);
+      setConnectionStatus("connected");
     };
 
     socket.onmessage = (event) => {
       const newEvent = JSON.parse(event.data);
 
-      setEvents((previousEvents) => [
-        newEvent,
-        ...previousEvents
-      ]);
+      setEvents((prevEvents) => [newEvent, ...prevEvents]);
+    };
+
+    socket.onerror = () => {
+      console.error("WebSocket error");
     };
 
     socket.onclose = () => {
       console.log("WebSocket disconnected");
-      setIsConnected(false);
+      setConnectionStatus("disconnected");
     };
 
     return () => {
@@ -100,12 +95,14 @@ function App() {
       
       <div className="connection-status">
         <span
-          className={
-            isConnected ? "connection-dot connected" : "connection-dot disconnected"
-          }
+          className={`connection-dot ${connectionStatus}`}
         ></span>
 
-        {isConnected ? "Live" : "Disconnected"}
+        {connectionStatus === "connected"
+          ? "Live"
+          : connectionStatus === "connecting"
+          ? "Connecting to server..."
+          : "Disconnected"}
       </div>
       <p className="subtitle">Device Cloud Monitoring Dashboard</p>
       

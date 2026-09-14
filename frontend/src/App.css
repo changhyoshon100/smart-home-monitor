@@ -146,3 +146,15 @@ h2 {
 .controls button:hover {
   opacity: 0.85;
 }
+
+.connection-dot.connecting {
+  background: #facc15;
+}
+
+.connection-dot.connected {
+  background: #22c55e;
+}
+
+.connection-dot.disconnected {
+  background: #ef4444;
+}
