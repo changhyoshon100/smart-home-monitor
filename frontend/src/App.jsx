@@ -3,37 +3,65 @@ import "./App.css";
 
 function App() {
   const [events, setEvents] = useState([]);
-  const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState("connecting");
+
+  const API_URL = import.meta.env.VITE_API_URL;
+  const WS_URL = API_URL.replace(/^http/, "ws") + "/ws";
 
   useEffect(() => {
-    setConnectionStatus("connecting");
+    // 기존 이벤트 불러오기
+    fetch(`${API_URL}/events`)
+      .then((response) => response.json())
+      .then((data) => {
+        setEvents(data);
+      })
+      .catch((error) => {
+        console.error("Failed to load events:", error);
+      });
 
-    const socket = new WebSocket(WS_URL);
+    let socket;
+    let reconnectTimer;
 
-    socket.onopen = () => {
-      console.log("WebSocket connected");
-      setConnectionStatus("connected");
+    const connectWebSocket = () => {
+      setConnectionStatus("connecting");
+
+      socket = new WebSocket(WS_URL);
+
+      socket.onopen = () => {
+        console.log("WebSocket connected");
+        setConnectionStatus("connected");
+      };
+
+      socket.onmessage = (event) => {
+        const newEvent = JSON.parse(event.data);
+
+        setEvents((prevEvents) => [newEvent, ...prevEvents]);
+      };
+
+      socket.onerror = () => {
+        console.error("WebSocket error");
+      };
+
+      socket.onclose = () => {
+        console.log("WebSocket disconnected");
+        setConnectionStatus("connecting");
+
+        reconnectTimer = setTimeout(() => {
+          connectWebSocket();
+        }, 3000);
+      };
     };
 
-    socket.onmessage = (event) => {
-      const newEvent = JSON.parse(event.data);
-
-      setEvents((prevEvents) => [newEvent, ...prevEvents]);
-    };
-
-    socket.onerror = () => {
-      console.error("WebSocket error");
-    };
-
-    socket.onclose = () => {
-      console.log("WebSocket disconnected");
-      setConnectionStatus("disconnected");
-    };
+    connectWebSocket();
 
     return () => {
-      socket.close();
+      clearTimeout(reconnectTimer);
+
+      if (socket) {
+        socket.close();
+      }
     };
-  }, []);
+  }, [API_URL, WS_URL]);
 
   const getLatestStatus = (deviceType) => {
     const latestEvent = events.find(
