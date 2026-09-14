@@ -56,3 +56,24 @@ FastAPI Backend
   "device_type": "motion_sensor",
   "status": "MOTION_DETECTED"
 }
+
+When a motion event is received, the backend stores the event and triggers a camera recording event. Connected dashboard clients receive the new events through WebSocket communication.
+
+Running Locally
+Backend
+    cd backend
+    source venv/bin/activate
+    uvicorn main:app --reload
+
+The backend runs on:
+
+http://127.0.0.1:8000
+
+API documentation:
+
+http://127.0.0.1:8000/docs
+
+Frontend
+    cd frontend
+    npm install
+    npm run dev

@@ -140,6 +140,122 @@ async def create_event(event: DeviceEvent):
         "event": new_event
     }
 
+@app.post("/simulate/intrusion")
+async def simulate_intrusion():
+    events = [
+        {
+            "device_id": "door-001",
+            "device_type": "door_sensor",
+            "status": "OPEN",
+        },
+        {
+            "device_id": "motion-001",
+            "device_type": "motion_sensor",
+            "status": "MOTION_DETECTED",
+        },
+        {
+            "device_id": "camera-001",
+            "device_type": "camera",
+            "status": "RECORDING",
+        },
+    ]
+
+    conn = sqlite3.connect("events.db")
+
+    created_events = []
+
+    for event in events:
+        cursor = conn.execute(
+            """
+            INSERT INTO events (device_id, device_type, status)
+            VALUES (?, ?, ?)
+            """,
+            (
+                event["device_id"],
+                event["device_type"],
+                event["status"],
+            ),
+        )
+
+        created_event = {
+            "id": cursor.lastrowid,
+            "device_id": event["device_id"],
+            "device_type": event["device_type"],
+            "status": event["status"],
+        }
+
+        created_events.append(created_event)
+
+    conn.commit()
+    conn.close()
+
+    for event in created_events:
+        await broadcast_event(event)
+
+    return {
+        "message": "Intrusion simulated",
+        "events": created_events,
+    }
+
+
+@app.post("/simulate/reset")
+async def reset_system():
+    events = [
+        {
+            "device_id": "door-001",
+            "device_type": "door_sensor",
+            "status": "CLOSED",
+        },
+        {
+            "device_id": "motion-001",
+            "device_type": "motion_sensor",
+            "status": "CLEAR",
+        },
+        {
+            "device_id": "camera-001",
+            "device_type": "camera",
+            "status": "IDLE",
+        },
+    ]
+
+    conn = sqlite3.connect("events.db")
+
+    created_events = []
+
+    for event in events:
+        cursor = conn.execute(
+            """
+            INSERT INTO events (device_id, device_type, status)
+            VALUES (?, ?, ?)
+            """,
+            (
+                event["device_id"],
+                event["device_type"],
+                event["status"],
+            ),
+        )
+
+        created_event = {
+            "id": cursor.lastrowid,
+            "device_id": event["device_id"],
+            "device_type": event["device_type"],
+            "status": event["status"],
+        }
+
+        created_events.append(created_event)
+
+    conn.commit()
+    conn.close()
+
+    for event in created_events:
+        await broadcast_event(event)
+
+    return {
+        "message": "System reset",
+        "events": created_events,
+    }
+
+
 
 @app.get("/events")
 def get_events():

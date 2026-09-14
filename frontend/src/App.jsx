@@ -64,6 +64,32 @@ function App() {
     return "";
   };
 
+  const simulateIntrusion = () => {
+    fetch(`${import.meta.env.VITE_API_URL}/simulate/intrusion`, {
+      method: "POST",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Intrusion simulated:", data);
+      })
+      .catch((error) => {
+        console.error("Failed to simulate intrusion:", error);
+      });
+  };
+
+  const resetSystem = () => {
+    fetch(`${import.meta.env.VITE_API_URL}/simulate/reset`, {
+      method: "POST",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("System reset:", data);
+      })
+      .catch((error) => {
+        console.error("Failed to reset system:", error);
+      });
+  };
+
   const doorStatus = getLatestStatus("door_sensor");
   const motionStatus = getLatestStatus("motion_sensor");
   const cameraStatus = getLatestStatus("camera");
@@ -82,6 +108,17 @@ function App() {
         {isConnected ? "Live" : "Disconnected"}
       </div>
       <p className="subtitle">Device Cloud Monitoring Dashboard</p>
+      
+      <div className="controls">
+        <button onClick={simulateIntrusion}>
+          Simulate Intrusion
+        </button>
+
+        <button onClick={resetSystem}>
+          Reset System
+        </button>
+      </div>
+
 
       <section>
         <h2>Devices</h2>

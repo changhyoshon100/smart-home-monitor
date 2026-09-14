@@ -126,3 +126,23 @@ h2 {
 .disconnected {
   background: #f87171;
 }
+
+
+.controls {
+  display: flex;
+  gap: 12px;
+  margin: 24px 0 40px;
+}
+
+.controls button {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.controls button:hover {
+  opacity: 0.85;
+}
